@@ -10,10 +10,9 @@ Berikut adalah alur tampilan aplikasi berdasarkan gambar yang diberikan. Pastika
 
 | 1. Validasi Password Kurang dari 6 Karakter | 2. Input Login Valid | 3. Halaman Beranda (Home Page) |
 |:---:|:---:|:---:|
-| ![Validasi Error] ![alt text](image-1.png)| ![alt text](image-2.png) | ![alt text](image-3.png) |
+| ![alt text](image-1.png)| ![alt text](image-2.png) | ![alt text](image-3.png) |
 | *Menunjukkan validasi form gagal karena password terlalu pendek (< 6 karakter).* | *Mengisi username dan password yang memenuhi syarat untuk masuk ke sistem.* | *Berhasil masuk, menampilkan nama pengguna secara dinamis dari memori lokal dan opsi Logout.* |
 
-*(Catatan: Silakan buat folder bernama `assets` di direktori utama projek Anda, lalu simpan ketiga foto tersebut dengan nama `1_validation_error.png`, `2_login_success.png`, dan `3_home_page.png`)*
 
 ---
 
