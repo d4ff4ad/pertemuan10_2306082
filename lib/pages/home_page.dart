@@ -3,8 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'login_page.dart';
 import '../models/product_model.dart';
 import 'product_page.dart';
-import 'product_detail_page.dart';
-import '../widgets/product_card.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
