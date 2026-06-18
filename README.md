@@ -8,11 +8,10 @@ Projek Flutter ini dibuat untuk mendemonstrasikan implementasi autentikasi seder
 
 Berikut adalah alur tampilan aplikasi berdasarkan gambar yang diberikan. Pastikan Anda menyimpan ketiga gambar tersebut ke dalam direktori `assets/` projek dengan nama file yang sesuai agar dapat ditampilkan pada dokumen ini:
 
-| 1. Validasi Password Kurang dari 6 Karakter | 2. Input Login Valid | 3. Halaman Beranda (Home Page) |
-|:---:|:---:|:---:|
-| ![alt text](image-1.png)| ![alt text](image-2.png) | ![alt text](image-3.png) |
-| *Menunjukkan validasi form gagal karena password terlalu pendek (< 6 karakter).* | *Mengisi username dan password yang memenuhi syarat untuk masuk ke sistem.* | *Berhasil masuk, menampilkan nama pengguna secara dinamis dari memori lokal dan opsi Logout.* |
-
+|                   1. Validasi Password Kurang dari 6 Karakter                    |                            2. Input Login Valid                             |                                3. Halaman Beranda (Home Page)                                 |
+| :------------------------------------------------------------------------------: | :-------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------: |
+|                             ![alt text](image-1.png)                             |                          ![alt text](image-2.png)                           |                                   ![alt text](image-3.png)                                    |
+| _Menunjukkan validasi form gagal karena password terlalu pendek (< 6 karakter)._ | _Mengisi username dan password yang memenuhi syarat untuk masuk ke sistem._ | _Berhasil masuk, menampilkan nama pengguna secara dinamis dari memori lokal dan opsi Logout._ |
 
 ---
 
@@ -28,9 +27,10 @@ Aplikasi ini berpusat pada tiga file Flutter utama:
 
 ## ⚙️ Apa itu Shared Preferences?
 
-`shared_preferences` adalah plugin Flutter yang digunakan untuk menyimpan data sederhana bertipe key-value secara persisten pada memori internal perangkat (seperti `SharedPreferences` pada Android dan `NSUserDefaults` pada iOS). 
+`shared_preferences` adalah plugin Flutter yang digunakan untuk menyimpan data sederhana bertipe key-value secara persisten pada memori internal perangkat (seperti `SharedPreferences` pada Android dan `NSUserDefaults` pada iOS).
 
 ### Mengapa Menggunakan Shared Preferences?
+
 - **Persistensi Sederhana**: Cocok untuk menyimpan pengaturan aplikasi (setting), status login (session token/flag), tema gelap/terang (dark/light mode), dan data ringan lainnya.
 - **Asinkron & Cepat**: Operasi baca/tulis dilakukan secara asinkron (`async`/`await`) sehingga tidak memblokir thread UI utama.
 - **Mudah Diintegrasikan**: Tidak membutuhkan setup database yang rumit seperti SQLite.
@@ -40,27 +40,31 @@ Aplikasi ini berpusat pada tiga file Flutter utama:
 ## 💻 Penjelasan & Alur Kode
 
 ### 1. Inisialisasi & Pengecekan Login Awal ([main.dart](file:///d:/KAMPUS/SEMESTER%206/PRAK%20PEMROGRAMAN%20MOBILE/pertemuan10_2306082/lib/main.dart))
+
 Di dalam file [main.dart](file:///d:/KAMPUS/SEMESTER%206/PRAK%20PEMROGRAMAN%20MOBILE/pertemuan10_2306082/lib/main.dart), method `checkLogin()` dipanggil secara otomatis saat state diinisialisasi (`initState()`).
-* Fungsi ini bertugas mengambil data `isLogin` dari `SharedPreferences`. Jika data belum ada, maka akan default bernilai `false`.
-* Selama proses pengambilan data berlangsung, aplikasi menampilkan `CircularProgressIndicator` (`isLoading = true`).
-* Setelah selesai, aplikasi mengarahkan pengguna secara otomatis ke [HomePage](file:///d:/KAMPUS/SEMESTER%206/PRAK%20PEMROGRAMAN%20MOBILE/pertemuan10_2306082/lib/pages/home_page.dart) jika sudah masuk sebelumnya, atau ke [LoginPage](file:///d:/KAMPUS/SEMESTER%206/PRAK%20PEMROGRAMAN%20MOBILE/pertemuan10_2306082/lib/pages/login_page.dart) jika belum.
+
+- Fungsi ini bertugas mengambil data `isLogin` dari `SharedPreferences`. Jika data belum ada, maka akan default bernilai `false`.
+- Selama proses pengambilan data berlangsung, aplikasi menampilkan `CircularProgressIndicator` (`isLoading = true`).
+- Setelah selesai, aplikasi mengarahkan pengguna secara otomatis ke [HomePage](file:///d:/KAMPUS/SEMESTER%206/PRAK%20PEMROGRAMAN%20MOBILE/pertemuan10_2306082/lib/pages/home_page.dart) jika sudah masuk sebelumnya, atau ke [LoginPage](file:///d:/KAMPUS/SEMESTER%206/PRAK%20PEMROGRAMAN%20MOBILE/pertemuan10_2306082/lib/pages/login_page.dart) jika belum.
 
 ```dart
 Future<void> checkLogin() async {
   final prefs = await SharedPreferences.getInstance();
   isLogin = prefs.getBool('isLogin') ?? false;
-  setState(() {      
+  setState(() {
     isLoading = false;
   });
 }
 ```
 
 ### 2. Validasi & Proses Menyimpan Data ([login_page.dart](file:///d:/KAMPUS/SEMESTER%206/PRAK%20PEMROGRAMAN%20MOBILE/pertemuan10_2306082/lib/pages/login_page.dart))
+
 Halaman ini menggunakan widget `Form` dengan `GlobalKey<FormState>` untuk mengontrol validasi.
-* **Validasi**:
-  * Username tidak boleh kosong.
-  * Password tidak boleh kosong dan harus minimal 6 karakter (seperti yang terlihat pada gambar pertama).
-* **Menyimpan Session**:
+
+- **Validasi**:
+  - Username tidak boleh kosong.
+  - Password tidak boleh kosong dan harus minimal 6 karakter (seperti yang terlihat pada gambar pertama).
+- **Menyimpan Session**:
   Jika validasi sukses, method `login()` akan dipanggil. Di dalamnya, kita membuka instance `SharedPreferences` dan menyimpan data berupa:
   1. `isLogin` bernilai `true` (menyatakan pengguna telah masuk).
   2. `username` berupa teks yang diinputkan pengguna.
@@ -81,10 +85,12 @@ Future<void> login() async {
 ```
 
 ### 3. Membaca & Menghapus Data Session ([home_page.dart](file:///d:/KAMPUS/SEMESTER%206/PRAK%20PEMROGRAMAN%20MOBILE/pertemuan10_2306082/lib/pages/home_page.dart))
+
 Halaman ini menampilkan sambutan hangat kepada pengguna yang namanya diambil dari penyimpanan lokal.
-* **Membaca Data**:
+
+- **Membaca Data**:
   Pada method `getUser()`, kita membaca data string dengan key `'username'`. Nilai tersebut disimpan ke variabel `username` lalu memicu pembaruan UI via `setState()`.
-* **Menghapus Data (Logout)**:
+- **Menghapus Data (Logout)**:
   Saat ikon logout diklik, fungsi `logout()` dijalankan untuk menghapus seluruh data yang tersimpan di dalam penyimpanan lokal melalui `prefs.clear()`. Setelah itu, pengguna akan dilempar kembali ke halaman login.
 
 ```dart
@@ -99,7 +105,7 @@ Future<void> getUser() async {
 // Menghapus Data (Logout)
 Future<void> logout() async {
   final prefs = await SharedPreferences.getInstance();
-  await prefs.clear(); 
+  await prefs.clear();
   if (!mounted) return;
   Navigator.pushReplacement(
     context,
