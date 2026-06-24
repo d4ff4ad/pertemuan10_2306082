@@ -3,6 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/product_model.dart';
 import '../widgets/product_card.dart';
 import 'product_detail_page.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key});
@@ -14,7 +17,20 @@ class ProductPage extends StatefulWidget {
 class _ProductPageState extends State<ProductPage> {
   List<ProductModel> products = [];
 
+  XFile? selectedImage;
+  final picker = ImagePicker();
+  late TextEditingController imgController;
 
+  Future<void> pickImage(StateSetter setDialogImage) async {
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setDialogImage(() {
+        selectedImage = image;
+        imgController.text = image.path;
+      });
+    }
+  }
 
   Future<void> loadProducts() async {
     final prefs = await SharedPreferences.getInstance();
@@ -71,87 +87,153 @@ class _ProductPageState extends State<ProductPage> {
     );
   }
 
+  Future<String> convertImageToBase64(XFile image) async {
+    Uint8List bytes = await image.readAsBytes();
+    return base64Encode(bytes);
+  }
+
   void showForm({ProductModel? product, int? index}) {
     final formKey = GlobalKey<FormState>();
+    
+    selectedImage = null;
+    imgController = TextEditingController(
+      text: product?.image ?? "",
+    );
+
     TextEditingController nameController = TextEditingController(
       text: product?.name ?? "",
     );
-    TextEditingController descriptionController = TextEditingController(
-      text: product?.description ?? "",
+    TextEditingController descController = TextEditingController(
+      text: product?.desc ?? "",
     );
     TextEditingController priceController = TextEditingController(
       text: product?.price.toString() ?? "",
     );
 
+    Widget buildPreviewImage() {
+      // 1. Jika ada gambar baru yang sedang dipilih dari galeri
+      if (selectedImage != null) {
+        return FutureBuilder<Uint8List>(
+          future: selectedImage!.readAsBytes(),
+          builder: (context, snapshot) {
+            // 2. Tampilkan loader jika data gambar belum siap
+            if (!snapshot.hasData) {
+              return const CircularProgressIndicator();
+            }
+            
+            // Tampilkan preview gambar baru yang dipilih
+            return Image.memory(
+              snapshot.data!,
+              width: 140,
+              height: 140,
+              fit: BoxFit.cover,
+              
+            );
+          },
+        );
+      }
+      
+      // 3. Jika tidak ada gambar baru, cek apakah produk ini sudah punya gambar sebelumnya
+      if (product?.image.isNotEmpty ?? false) {
+        return Image.memory(
+          base64Decode(product!.image),
+          width: 150,
+          height: 150,
+          fit: BoxFit.cover,
+        );
+      }
+      
+      // Jika benar-benar tidak ada gambar sama sekali
+      return const SizedBox.shrink();
+    }
+
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(product == null ? "Tambah" : "Edit Produk"),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: "Nama"),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return "Nama tidak boleh kosong";
-                  }
-                  return null;
-                },
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(product == null ? "Tambah" : "Edit Produk"),
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: "Nama"),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return "Nama tidak boleh kosong";
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: descController,
+                    decoration: const InputDecoration(labelText: "Deskripsi"),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return "Deskripsi tidak boleh kosong";
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: priceController,
+                    decoration: const InputDecoration(labelText: "Harga"),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return "Harga tidak boleh kosong";
+                      }
+                      final price = int.tryParse(value);
+                      if (price == null || price <= 0) {
+                        return "Harga harus berupa angka lebih dari 0";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () => pickImage(setState),
+                    icon: const Icon(Icons.image),
+                    label: const Text("Pilih Gambar"),
+                  ),
+                  buildPreviewImage(),
+                ],
               ),
-              TextFormField(
-                controller: descriptionController,
-                decoration: const InputDecoration(labelText: "Deskripsi"),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return "Deskripsi tidak boleh kosong";
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () async {
+                  if (formKey.currentState!.validate()) {
+                    String imageBase64 = product?.image ?? "";
+                    if (selectedImage != null) {
+                      imageBase64 = await convertImageToBase64(selectedImage!);
+                    }
+
+                    final newProduct = ProductModel(
+                      name: nameController.text,
+                      desc: descController.text,
+                      price: int.parse(priceController.text),
+                      image: imageBase64,
+                    );
+                    if (product == null) {
+                      addProduct(newProduct);
+                    } else {
+                      updateProduct(index!, newProduct);
+                    }
+                    if (!context.mounted) return;
+                    Navigator.pop(context);
                   }
-                  return null;
                 },
-              ),
-              TextFormField(
-                controller: priceController,
-                decoration: const InputDecoration(labelText: "Harga"),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return "Harga tidak boleh kosong";
-                  }
-                  final price = int.tryParse(value);
-                  if (price == null || price <= 0) {
-                    return "Harga harus berupa angka lebih dari 0";
-                  }
-                  return null;
-                },
+                child: Text(
+                  product == null ? "Simpan" : "Perbaharui"
+                ),
               ),
             ],
-          ),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                final newProduct = ProductModel(
-                  name: nameController.text,
-                  description: descriptionController.text,
-                  price: int.parse(priceController.text),
-                );
-                if (product == null) {
-                  addProduct(newProduct);
-                } else {
-                  updateProduct(index!, newProduct);
-                }
-                Navigator.pop(context);
-              }
-            },
-            child: Text(
-              product == null ? "Simpan" : "Perbaharui"
-            ),
-          ),
-        ],
+          );
+        }
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/product_model.dart';
+import 'dart:convert';
 
 // Langkah 17: Membuat reusable widget ProductCard
 class ProductCard extends StatelessWidget {
@@ -37,20 +38,36 @@ class ProductCard extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 5),
+                        const SizedBox(height: 5),
             Text("Rp ${product.price}"),
             const SizedBox(height: 5),
-            Text(product.description),
+            product.image.isNotEmpty
+                ? Image.memory(
+                    base64Decode(product.image),
+                    width: 120,
+                    height: 120,
+                    fit: BoxFit.cover,
+                  )
+                : const Icon(Icons.image, size: 120),
+            
           ],
         ),
-        leading: onEdit != null ? IconButton(
-          icon: const Icon(Icons.edit, color: Colors.orange),
-          onPressed: onEdit,
-        ) : null,
-        trailing: onDelete != null ? IconButton(
-          icon: const Icon(Icons.delete, color: Colors.red),
-          onPressed: onDelete,
-        ) : null,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (onEdit != null)
+              IconButton(
+                icon: const Icon(Icons.edit, color: Colors.green),
+                onPressed: () => onEdit!(),
+              ),
+            const SizedBox(width: 10),
+            if (onDelete != null)
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () => onDelete!(),
+              ),
+          ],
+        ),
       ),
     );
   }
